@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supermarket</title>
+    <style>
+        table, tr, td{
+            border: 1px solid black;
+        }
+        td{
+            width: 3rem;
+            height: 3rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Supermarket</h1>
+    <p id="respuesta"></p>
+    <p id="matriz"></p>
+
+    <script>
+        var supers = [
+        ];
+        function recupera(){
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.onreadystatechange = function() {
+                if (this.readyState==4 && this.status==200){
+                    let data = JSON.parse(this.responseText)["poblacion"];
+                    mostrar(data, document.getElementById("matriz"));
+                    let seguir = true;
+                    do{
+                        let cordi = -1, cordj = -1;
+                        do{
+                            cordi = prompt("Dime la fila en la quieres el super (debe ser menor que " + data.length + ")");
+                        }while(cordi > data.length || cordi < 0);
+                        do{
+                            cordj = prompt("Dime la columna en la quieres el super (debe ser menor que " + data[cordi].length + ")");
+                        }while(cordj > data[cordi].length || cordj < 0);
+                        let habs = totalHabitantes(data);
+                        nuevoSuper(cordi, cordj, habs, data);
+                        let sigue = "";
+                        do{
+                        sigue = prompt("Desea seguir añadiendo supers? (Si/No)");
+                        }while(!(sigue == "Si" || sigue == "No"));
+                        if(sigue == "No"){
+                            seguir = false
+                        }
+                    }while(seguir);
+                    mostrarSupers(document.getElementById("respuesta"));
+                }
+            };
+            xmlhttp.open("GET", "supermarket.php",true);
+            xmlhttp.send();
+        }
+        function mostrar(matriz, padre){
+            let table = document.createElement("table");
+            matriz.map(fila =>{
+                let tr = document.createElement("tr");
+                fila.map(elemento => {
+                    let td = document.createElement("td");
+                    if(elemento == ""){
+                        td.innerHTML = " ";
+                    }else{
+                        td.innerHTML = elemento;
+                    }
+                    tr.appendChild(td);
+                });
+                table.appendChild(tr);
+            });
+            padre.appendChild(table);
+        }
+        function totalHabitantes(datos){
+            let total = 0;
+            for(let i = 0; i < datos.length; i++){
+                for(let j = 0; j < datos[i].length; j++){
+                    total += datos[i][j];
+                }
+            }
+            return total;
+        }
+        function nuevoSuper(cordenadai, cordenadaj,habitantes, matrizH){
+            //document.getElementById("respuesta").innerHTML = "El nuevo super se ha creado en " + cordenadai + "x" + cordenadaj + " con un total de " + habitantes;
+            let psuper = 0;
+            if(supers.length == 0){
+                psuper = habitantes;
+            }else{
+                supers.map(elemento => elemento[2] = 0);
+                let menorDistancia = -1, elemCerca = -1;
+                for(let i = 0; i < matrizH.length; i++){
+                    for(let j = 0; j < matrizH[i].length; j++){
+                        menorDistancia = -1;
+                        for(let k = 0; k < supers.length; k++){
+                            let nuevaD = Math.abs(supers[k][0] - i) + Math.abs(supers[k][1] - j);
+                            if(menorDistancia == -1 || menorDistancia > nuevaD){
+                                menorDistancia = nuevaD;
+                                elemCerca = k;
+                            }
+                        }
+                        let distanciaNuevoS = Math.abs(cordenadai - i) + Math.abs(cordenadaj - j);
+                        if(menorDistancia > distanciaNuevoS){
+                            menorDistancia = distanciaNuevoS;
+                            elemCerca = -1;
+                        }
+                        if(elemCerca == -1){
+                            psuper += matrizH[i][j];
+                        }else{
+                            supers[elemCerca][2] += matrizH[i][j];
+                        }
+                    }
+                }
+            }
+            let nuevo = [cordenadai, cordenadaj, psuper];
+            supers.push(nuevo);
+        }
+
+        function mostrarSupers(padre){
+            for(let i = 0; i < supers.length; i++){
+                padre.innerHTML += "Las personas que van al super con coordenadas " + supers[i][0] + "x" + supers[i][1] +" son: " + supers[i][2] + "<br/>";
+            }
+        }
+        recupera();
+    </script>
+</body>
+</html>
